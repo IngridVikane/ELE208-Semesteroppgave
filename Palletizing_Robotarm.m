@@ -28,11 +28,11 @@ DHmatrix = @(p) [ ...
 
 
 % Robot model
-robot.DH(1) = struct('type','R', 'a',0, 'alpha',pi/2, 'd',L1, 'theta',q1);
+robot.DH(1) = struct('type','R', 'a',0, 'alpha',(sym(pi)/2), 'd',L1, 'theta',q1);
 robot.DH(2) = struct('type','R', 'a',L2, 'alpha',0, 'd',0, 'theta',q2+pi/2);
 robot.DH(3) = struct('type','R', 'a',L3, 'alpha',0, 'd',0, 'theta',q3);
-robot.DH(4) = struct('type','R', 'a',0, 'alpha',-pi/2, 'd',L4, 'theta',q4-pi/2);
-robot.DH(5) = struct('type','R', 'a',0, 'alpha',pi/2, 'd',L5, 'theta',q5);
+robot.DH(4) = struct('type','R', 'a',0, 'alpha',(-sym(pi)/2), 'd',L4, 'theta',q4-(sym(pi)/2));
+robot.DH(5) = struct('type','R', 'a',0, 'alpha',(sym(pi)/2), 'd',L5, 'theta',q5);
 robot.DH(6) = struct('type','R', 'a',0, 'alpha',0, 'd',L6, 'theta',q6);
 
 % Transformation (Palletizing Robot)
@@ -46,9 +46,9 @@ T56 = DHmatrix(robot.DH(6));
 T06 = T01*T12*T23*T34*T45*T56
 
 % Sizing the robot (Legg inn faktiske lenkelengder)
-robot.L1 = 0.4;
-robot.L2 = 0.5;
-robot.L3  = 0.4;
+robot.L1 = 0.3;
+robot.L2 = 0.8;
+robot.L3  = 0.6;
 robot.L4  = 0.3;
 robot.L5  = 0.35;
 robot.L6  = 0.3;
@@ -130,7 +130,7 @@ T0C = transl(conveyorPosition) * trotz(conveyorRotation);
 
 
 % Transformation from robot {0} relative to pallet {P}
-palletPosition = [1.0, 0.2, 0];
+palletPosition = [0.8, 0, 0];
 palletRotation = pi/2;
 
 
@@ -166,8 +166,8 @@ T0B_K = T0K *  TKB;             % Transformation of detected box position from c
 
 % Workspace Dimensions
 conveyor.length     = 0.6;      % Has to fit a box (400x400x400mm) -> 10 cm space on each side of box
-conveyor.width      = 1.0;      % Not important
-conveyor.height    = 0.4;      % Max. vertical reach 1m (0.4m + 0.4m (box) = 0.8) -> 0.2m space to lift box up 
+conveyor.width      = 1.0;      
+conveyor.height     = 0.4;      % Max. vertical reach 1m (0.4m + 0.4m (box) = 0.8) -> 0.2m space to lift box up 
 
 pallet.length       = 1.20;     % Standard European Pallet
 pallet.width        = 0.80;
@@ -189,25 +189,27 @@ camera.z            = 2.00;     % Height above ground
 %% Vizualising Robot
 
 q0 = deg2rad([-75 -20 -20 -30 90 0]);
+% q0 = deg2rad([0 0 0 0 0 0]);
 
 figure('Name','6DOF Palletizing Workspace');
 
-% Robot
+% Robot in workspace 
 Palletizing.plot(q0, ...
     'workspace', [-1.8 1.8 -1.8 1.8 -0.1 1.8]);
 
-% Calculate TCP transformation
-T0TCP_calculated = Palletizing.fkine(q0);
+% TCP transformation
+T0TCP_transformation = Palletizing.fkine(q0);
 
-disp('TCP position [m]:');               % To control the location of the TCP when we move the robot
-disp(transl(T0TCP_calculated));
+disp('TCP position [m]:');                  % To control the location of the TCP when we move the robot
+transl(T0TCP_transformation)
 
 
 %% Workspace visualization using patch() 
 % References: 
 % https://se.mathworks.com/help/matlab/visualize/multifaceted-patches.html 
 % + https://se.mathworks.com/help/matlab/ref/matlab.graphics.primitive.patch-properties.html 
-% + ChatGPT
+% + ChatGPT (OpenAI) was used as a guide when implementing patch() 
+% Prompt: https://chatgpt.com/share/6ad4f776-00b4-83ed-ac72-f81b8dbd6c09 
 
 hold on;
 
