@@ -1,0 +1,73 @@
+<?xml version="1.0"?>
+<!-- Camera sensor macro,
+     ros2_students_25-master/my_robotarm_pkg/urdf/camera.xacro (sensor type, topics,
+     640x480 R8G8B8, update_rate, clip). RealSense D435 : ~90x26x27 mm boks over conveyor looking down;
+     its TF frame comes for free because it is a fixed child link of the robot root,
+     which is what "transform from sensor to robot" needs on the MATLAB side. -->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- Define Camera Macro -->
+  <xacro:macro name="camera_sensor" params="parent_link x y z roll pitch yaw">
+
+    <!-- RealSense D435 body (W90 x H26 x D27 mm) -->
+    <material name="camera_black">
+      <color rgba="0.1 0.1 0.12 1.0"/>
+    </material>
+
+    <!-- Camera Link (D435 box) -->
+    <link name="camera_link">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <box size="0.027 0.090 0.026"/>
+        </geometry>
+        <material name="camera_black"/>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <box size="0.027 0.090 0.026"/>
+        </geometry>
+      </collision>
+      <inertial>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <mass value="0.0135"/>
+        <inertia ixx="0.000001" ixy="0" ixz="0" iyy="0.000001" iyz="0" izz="0.000001"/>
+      </inertial>
+    </link>
+
+    <!-- Joint attaching Camera to specified parent link -->
+    <joint name="camera_joint" type="fixed">
+      <origin xyz="${x} ${y} ${z}" rpy="${roll} ${pitch} ${yaw}"/>
+      <parent link="${parent_link}"/>
+      <child link="camera_link"/>
+    </joint>
+
+    <!-- Gazebo Camera Sensor & Plugin -->
+    <gazebo reference="camera_link">
+      <sensor name="camera" type="camera">
+        <always_on>true</always_on>
+        <update_rate>30</update_rate>
+        <visualize>true</visualize>
+        <topic>camera/image_raw</topic>
+        <gz_frame_id>camera_link</gz_frame_id>
+
+        <camera>
+          <camera_info_topic>camera/camera_info</camera_info_topic>
+          <horizontal_fov>1.047</horizontal_fov>
+          <image>
+            <width>640</width>
+            <height>480</height>
+            <format>R8G8B8</format>
+          </image>
+          <clip>
+            <near>0.1</near>
+            <far>100</far>
+          </clip>
+        </camera>
+      </sensor>
+    </gazebo>
+
+  </xacro:macro>
+
+</robot>

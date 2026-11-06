@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>palletizer_robot</name>
+  <version>0.1.0</version>
+  <description>6-DOF palletizing robot fra ELE208 DH tables for Gazebo/ROS 2 (Jazzy) simulation.</description>
+  <maintainer email="you@example.com">ELE208 group</maintainer>
+  <license>Apache-2.0</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <depend>rclcpp</depend>
+  <depend>robot_state_publisher</depend>
+  <depend>ros_gz_sim</depend>
+  <depend>ros_gz_bridge</depend>
+  <depend>xacro</depend>
+  <exec_depend>launch</exec_depend>
+  <exec_depend>launch_ros</exec_depend>
+  <exec_depend>controller_manager</exec_depend>
+  <exec_depend>joint_state_broadcaster</exec_depend>
+  <exec_depend>joint_trajectory_controller</exec_depend>
+  <exec_depend>gz_ros2_control</exec_depend>
+  <exec_depend>rclpy</exec_depend>
+  <exec_depend>ros_gz_interfaces</exec_depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>
