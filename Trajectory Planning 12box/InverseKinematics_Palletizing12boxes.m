@@ -10,7 +10,19 @@ run('Palletizing_Robotarm12boxes.m');
 rng(1);
 
 %% Settings
-N = 15;                  % Points per movement
+N = 100;                 % Points per movement
+% Movement times [s]
+
+t1 = 0.5;  % Start -> Pickup
+t2 = 0.5;  % Pickup -> Start
+t3 = 1.5;  % Start -> Above pallet
+t4 = 0.5;  % Above pallet -> Place
+t5 = 0.5;  % Place -> Above pallet
+t6 = 1.5;  % Above pallet -> Start
+
+movementTimes = [t1 t2 t3 t4 t5 t6];
+
+% Box settings
 numBoxes = 12;           % number of boxes
 numPositions = 6;
 
@@ -92,7 +104,7 @@ for boxNumber = 1:numBoxes
     q_down = cartesianMove( ...
         Palletizing,q_above_c,T_above_c,T_pickup,N);
 
-    animatePath(Palletizing,q_down,fig,video);
+    animatePath(Palletizing,q_down,fig,video,t1);
 
     % Simulated gripper closes maybe flag for later
     fprintf('Gripper CLOSED\n');
@@ -100,7 +112,7 @@ for boxNumber = 1:numBoxes
 
     % Lift box
     q_up = flipud(q_down);
-    animatePath(Palletizing,q_up,fig,video);
+    animatePath(Palletizing,q_up,fig,video,t2);
 
     currentQ = q_above_c;
 
@@ -135,14 +147,14 @@ for boxNumber = 1:numBoxes
 
     validatePath(Palletizing,q_move,maxJointStep);
 
-    animatePath(Palletizing,q_move,fig,video);
+    animatePath(Palletizing,q_move,fig,video,t3);
 
     %% Place box
 
     q_place = cartesianMove( ...
         Palletizing,q_above_B,T_above_B,T_B,N);
 
-    animatePath(Palletizing,q_place,fig,video);
+    animatePath(Palletizing,q_place,fig,video,t4);
 
     % Simulated gripper opens
     fprintf('Gripper OPEN\n');
@@ -158,7 +170,7 @@ for boxNumber = 1:numBoxes
     %% Lift gripper
 
     q_lift = flipud(q_place);
-    animatePath(Palletizing,q_lift,fig,video);
+    animatePath(Palletizing,q_lift,fig,video,t5);
 
     %% Return to conveyor
 
@@ -167,7 +179,7 @@ for boxNumber = 1:numBoxes
 
     validatePath(Palletizing,q_return,maxJointStep);
 
-    animatePath(Palletizing,q_return,fig,video);
+    animatePath(Palletizing,q_return,fig,video,t6);
 
     currentQ = q_above_c;
 
@@ -320,21 +332,34 @@ function validatePath(robot,qPath,maxStep)
 
 end
 
+
+
 %% =========================================
-% ANIMATE ROBOT
+% ANIMATE ROBOT WITH MOVEMENT TIME
 % =========================================
 
-function animatePath(robot,qPath,fig,video)
+function animatePath(robot,qPath,fig,video,movementTime)
 
     figure(fig);
 
-    for i = 1:size(qPath,1)
+    % Number of video frames
+    numFrames = round(movementTime * video.FrameRate);
 
-        robot.animate(qPath(i,:));
+    % Original trajectory points
+    sOriginal = linspace(0,1,size(qPath,1));
 
-        drawnow limitrate;
+    % New trajectory points for video
+    sVideo = linspace(0,1,numFrames+1);
 
-        % Record video
+    % Interpolate joint positions
+    qVideo = interp1(sOriginal,qPath,sVideo,'linear');
+
+    % Animate and record
+    for i = 2:size(qVideo,1)
+
+        robot.animate(qVideo(i,:));
+        drawnow;
+
         frame = getframe(fig);
         writeVideo(video,frame);
 
