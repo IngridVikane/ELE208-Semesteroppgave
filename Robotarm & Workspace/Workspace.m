@@ -69,10 +69,14 @@ camera.z            = 2.00;     % Height above ground
 %%-----------------------------------------------------------------------------------------------------------------------%%
 
 
-%% Vizualising Robot
+% Desired TCP start position
+T_start = transl(0,-1.0,1.0)*trotx(pi);
 
-q0 = deg2rad([-75 -20 -20 -30 90 0]);
-% q0 = deg2rad([0 0 0 0 0 0]);
+% Initial guess for inverse kinematics
+qSeed = deg2rad([-75 -20 -20 -30 90 0]);
+
+%% Vizualising Robot
+q0 = Palletizing.ikcon(T_start,qSeed);
 
 figure('Name','6DOF Palletizing Workspace');
 
