@@ -47,8 +47,8 @@ T06 = T01*T12*T23*T34*T45*T56
 
 % Sizing the robot (Legg inn faktiske lenkelengder)
 robot.L1 = 0.1;
-robot.L2 = 0.8;
-robot.L3  = 0.9;
+robot.L2 = 0.9;
+robot.L3  = 0.8;
 robot.L4  = 0.2;
 robot.L5  = 0.15;
 robot.L6  = 0.15;
