@@ -46,12 +46,12 @@ T56 = DHmatrix(robot.DH(6));
 T06 = T01*T12*T23*T34*T45*T56
 
 % Sizing the robot (Legg inn faktiske lenkelengder)
-robot.L1 = 0.3;
+robot.L1 = 0.1;
 robot.L2 = 0.8;
-robot.L3  = 0.6;
-robot.L4  = 0.3;
-robot.L5  = 0.35;
-robot.L6  = 0.3;
+robot.L3  = 0.9;
+robot.L4  = 0.2;
+robot.L5  = 0.15;
+robot.L6  = 0.15;
 
 % Create SerialLink model
 
@@ -97,18 +97,18 @@ T = Palletizing.fkine(q)
 
 % Implement Robots Joint limits
 Palletizing.qlim = [ ...
-    -pi         pi;          % Joint 1: revolute
-    -pi         pi;          % Joint 2: revolute
-    deg2rad([-160 160]);     % Joint 3: revolute
-    -pi         pi;          % Joint 4: revolute
-    -pi         pi;          % Joint 5: revolute
-    -pi         pi];         % Joint 6: revolute
+    deg2rad([70  230]);         % Joint 1: revolute
+    -pi/2         pi/2;         % Joint 2: revolute
+    deg2rad([-180 180]);        % Joint 3: revolute
+    -pi         pi;             % Joint 4: revolute
+    -pi         pi;             % Joint 5: revolute
+    -pi         pi];            % Joint 6: revolute
 
 %% PowerPick 10 Vacuum Gripper
 
 gripper.name = 'PowerPick 10';
 
-gripper.tcp = [0 0 0.1];            % [m]
+gripper.tcp = [0 0 0.1];        % [m]
 
 % TCP transformation relative to robotbase
 T6TCP = transl(gripper.tcp);
