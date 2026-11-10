@@ -4,7 +4,7 @@ clear;
 close all;
 
 %% Load robot and workspace
-run('Palletizing_Robotarm12boxes.m');
+run('Palletizing_Robotarm.m');
 
 % Joint limits are defined in Palletizing_Robotarm.m
 rng(1);
