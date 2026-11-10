@@ -3,6 +3,7 @@ clear;
 
 % Run model & workspace
 run('Palletizing_Robotarm.m');
+run('Workspace.m');
 
 %% Trajectories
 % Above and pickup at Conveyor
