@@ -16,7 +16,7 @@ def _pose(origin_el):
     return (origin_el.get('xyz', '0 0 0') + ' ' + origin_el.get('rpy', '0 0 0')).strip()
 
 
-def _geometry(el):
+def _geometry(el, package_path=None):
     out = ET.Element('geometry')
     for child in list(el):
         if child.tag == 'box':
@@ -29,10 +29,24 @@ def _geometry(el):
             g = ET.SubElement(out, 'cylinder')
             ET.SubElement(g, 'radius').text = child.get('radius')
             ET.SubElement(g, 'length').text = child.get('length')
+        elif child.tag == 'mesh':
+            g = ET.SubElement(out, 'mesh')
+            uri = child.get('filename', '')
+            # gz spawned from a string has no ament package index: rewrite
+            # package:// URIs of THIS package to absolute file:// paths.
+            prefix = 'package://' + _geometry.pkg_name + '/'
+            if uri.startswith(prefix) and package_path:
+                uri = 'file://' + os.path.join(package_path, uri[len(prefix):])
+            ET.SubElement(g, 'uri').text = uri
+            if child.get('scale'):
+                ET.SubElement(g, 'scale').text = child.get('scale')
     return out
 
 
-def _convert_link(el, model, materials):
+_geometry.pkg_name = 'palletizer_robot'
+
+
+def _convert_link(el, model, materials, package_path=None):
     link = ET.SubElement(model, 'link', {'name': el.get('name', '')})
     nv = 0
     nc = 0
@@ -43,7 +57,7 @@ def _convert_link(el, model, materials):
             o = child.find('origin')
             if o is not None:
                 ET.SubElement(v, 'pose').text = _pose(o)
-            v.append(_geometry(child.find('geometry')))
+            v.append(_geometry(child.find('geometry'), package_path))
             m = child.find('material')
             rgba = materials.get(m.get('name')) if m is not None else None
             if rgba:
@@ -57,7 +71,7 @@ def _convert_link(el, model, materials):
             o = child.find('origin')
             if o is not None:
                 ET.SubElement(c_el, 'pose').text = _pose(o)
-            c_el.append(_geometry(child.find('geometry')))
+            c_el.append(_geometry(child.find('geometry'), package_path))
         elif child.tag == 'inertial':
             i = ET.SubElement(link, 'inertial')
             o = child.find('origin')
@@ -109,7 +123,7 @@ def _convert_joint(el, model, child_link):
                 ET.SubElement(lim, 'dissipation').text = repr(damp)
 
 
-def robot_model_sdf_from_urdf(urdf_str):
+def robot_model_sdf_from_urdf(urdf_str, package_path=None):
     """Convert the URDF robot description to an SDFormat <model> and anchor its base
     link with a fixed joint to world, so bullet-featherstone anchors frame {0} at the
     world origin (a bare URDF root becomes a FLOATING base -> the robot 'flies')."""
@@ -124,7 +138,7 @@ def robot_model_sdf_from_urdf(urdf_str):
     link_els = {}
     for el in list(root):
         if el.tag == 'link':
-            link_els[el.get('name')] = _convert_link(el, model, materials)
+            link_els[el.get('name')] = _convert_link(el, model, materials, package_path)
     for el in list(root):
         if el.tag == 'link':
             pass  # done above
@@ -180,7 +194,7 @@ def generate_launch_description():
     )
 
 # forankring
-    robot_model_sdf = robot_model_sdf_from_urdf(my_robotarm_description)
+    robot_model_sdf = robot_model_sdf_from_urdf(my_robotarm_description, package_path)
 
     world_file = os.path.join(package_path, 'worlds', 'pick_and_place.sdf')
 
@@ -211,7 +225,7 @@ def generate_launch_description():
 
     # Boxes spawn one at a time on the conveyor , spawn en ekstra boks når forrige har blitt beveget vekk
     box_pose_bridges = [f'/model/B{i}/pose@geometry_msgs/msg/PoseStamped[gz.msgs.Pose'
-                        for i in range(1, 7)]
+                        for i in range(1, 13)]
     node_ros_gz_bridge = Node(
         package='ros_gz_bridge',
         executable='parameter_bridge',
@@ -220,6 +234,8 @@ def generate_launch_description():
             # D435 over conveyor
             '/camera/image_raw@sensor_msgs/msg/Image[gz.msgs.Image',
             '/camera/camera_info@sensor_msgs/msg/CameraInfo[gz.msgs.CameraInfo',
+            # Vacuum gripper box transport + placement service bridge
+            '/world/pick_and_place/set_pose@ros_gz_interfaces/srv/SetEntityPose',
         ] + box_pose_bridges,
         output='screen'
     )

@@ -1,6 +1,10 @@
 controller_manager:
   ros__parameters:
     update_rate: 100 #Hz
+    # gz_ros2_control GazeboSimSystem position interface: v = gain * update_rate * (cmd - pos).
+    # Read from THIS node (controller_manager) by gz_system.cpp - do not move to file root
+    # (a bare top-level key is invalid rcl yaml and crashes the gz sim process).
+    position_proportional_gain: 0.25
 
     joint_state_broadcaster:
       type: joint_state_broadcaster/JointStateBroadcaster
