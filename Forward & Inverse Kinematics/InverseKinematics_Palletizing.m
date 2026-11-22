@@ -1,17 +1,16 @@
 clc; 
 clear; 
 
-% Run model & workspace
+% Kjører Palletizing Robotarm & Workspace
 run('Palletizing_Robotarm.m');
 run('Workspace.m');
 
-%% Trajectories
-% Above and pickup at Conveyor
+%% Trajectories/Baneplanlegging
+% Over transportbåndet (T_above_c) og plukker opp fra transportbåndet (T_pickup)
+T_above_c = transl(0, -1.0, 1.0)*trotx(pi);
 T_pickup = transl(0, -1.0, 0.8) * trotx(pi);                         
 
-T_above_c = transl(0, -1.0, 1.0)*trotx(pi);
-
-% Above Predefined box positions
+% Over forhåndsdefinerte eskeposisjoner
 T_above_B1 = transl(0.6, -0.4, 1.0)*trotx(pi);
 T_above_B2 = transl(0.6, 0.0, 1.0)*trotx(pi);
 T_above_B3 = transl(0.6, 0.4, 1.0)*trotx(pi);
@@ -19,7 +18,7 @@ T_above_B4 = transl(1.0, -0.4, 1.0)*trotx(pi);
 T_above_B5 = transl(1.0, 0.0, 1.0)*trotx(pi);
 T_above_B6 = transl(1.0, 0.4, 1.0)*trotx(pi);
 
-% Place down at Predefined box positions
+% Plasserer esker ned i forhåndsdefinerte posisjoner
 T_B1 = transl(0.6, -0.4, pallet.height + box.size) * trotx(pi);
 T_B2 = transl(0.6, 0.0, pallet.height + box.size) * trotx(pi);
 T_B3 = transl(0.6, 0.4, pallet.height + box.size) * trotx(pi);
@@ -27,14 +26,14 @@ T_B4 = transl(1.0, -0.4, pallet.height + box.size) * trotx(pi);
 T_B5 = transl(1.0, 0.0, pallet.height + box.size) * trotx(pi);
 T_B6 = transl(1.0, 0.4, pallet.height + box.size) * trotx(pi);
 
-%% Inverse Kinematics using ikcon()
-q0 = deg2rad([20 20 20 20 20 20]);       % Start config
+%% Inverse Kinematics/Inverskinematikk vha ikcon()
+q0 = deg2rad([20 20 20 20 20 20]);      % Startkonfigurasjon
 
-% For the conveyor
+% For transportbåndet
 q_above_c = Palletizing.ikcon(T_above_c, q0);
 q_pickup = Palletizing.ikcon(T_pickup, q_above_c);
 
-% For the box placements
+% For plasseringen av boksene
 q_above_B1 = Palletizing.ikcon(T_above_B1, q_above_c)
 q_B1 = Palletizing.ikcon(T_B1, q_above_B1);
 
@@ -53,24 +52,24 @@ q_B5 = Palletizing.ikcon(T_B5, q_above_B5);
 q_above_B6 = Palletizing.ikcon(T_above_B6, q_above_c)
 q_B6 = Palletizing.ikcon(T_B6, q_above_B6);
 
-%% Visualize
+%% Visualisering
 fig = findobj('Type', 'figure', ...
-    'Name', '6DOF Palletizing Workspace');
+    'Name', '6DOF Pallsettingsrobot i Arbeidsområdet');
 
 Palletizing.plot(q_above_c);
-title('Above Conveyor');
+title('Over transportbåndet');
 
 Palletizing.plot(q_B1);
-title('Ready to Place Box B1');
+title('Klar til å plassere eske B1');
 
-% Calculate TCP pose for configurations to double check
+% Beregner TCP-posisjonen (vha. fk) for å dobbelsjekke
 T_TCP_A = Palletizing.fkine(q_above_c);
 TCP_A = transl(T_TCP_A)
 
 T_TCP_B = Palletizing.fkine(q_B1);
 TCP_B = transl(T_TCP_B)
 
-%% Joint-space trajectory: Between conveyor and pallet
+%% Joint-space Bane: Mellom transportbåndet og pallen (jtraj)
 % B1
 T_move = 3;
 N = 100;
@@ -78,10 +77,10 @@ t = linspace(0, T_move, N);
 
 [q, qd, qdd] = jtraj(q_above_c, q_above_B1, t);
 
-%figure
-%Palletizing.plot(q);
+figure
+Palletizing.plot(q);
 
-% Calculate TCP positions
+% Beregner TCP posisjonen for hver
 p = zeros(N, 3);
 
 for i = 1:N
@@ -89,7 +88,7 @@ for i = 1:N
     p(i,:) = transl(T_actual);
 end
 
-% Plot TCP path
+% Tegner TCP banen
 figure
 plot3(p(:,1), p(:,2), p(:,3), 'LineWidth', 2)
 grid on
@@ -98,39 +97,38 @@ axis equal
 xlabel('X [m]')
 ylabel('Y [m]')
 zlabel('Z [m]')
-title('TCP path - Joint-space trajectory')
+title('TCP bane - Joint-space trajectory')
 
 hold on
 plot3(p(1,1), p(1,2), p(1,3), 'go');
 plot3(p(end,1), p(end,2), p(end,3), 'ro');
 
-legend('TCP Path', 'Start', 'End');
+legend('TCP Bane', 'Start', 'Slutt');
 
 q_return = flipud(q);
 
-
-%% Cartesian Trajectory - Pickup
+%% Kartesisk Bane - Opp-plukking
 N = 100;
 s = linspace(0, 1, N);
 
-% Start and end positions (got problems with matrix multiplication)
+% Start og sluttposisjoner (fikk litt problemer med matrise multiplikasjon)
 pA = reshape(transl(T_pickup), 1, 3);
 pB = reshape(transl(T_above_c), 1, 3);
 
-% Linear interpolation of TCP position
+% Lineær interpolering av TCP-posisjon
 p = (1-s')*pA + s'*pB;
 
-% Desired TCP orientation
+% Ønsket TCP-orientering
 R = trotx(pi);
 
-% Construct desired poses
+% Sett opp ønskede poses
 T = cell(N,1);
 
 for i = 1:N
     T{i} = transl(p(i,:)) * R;
 end
 
-% Inverse kinematics
+% Invers kinematikk
 q_pick = zeros(N,6);
 q_pick(1,:) = q_pickup;
 
@@ -138,33 +136,33 @@ for i = 2:N
     q_pick(i,:) = Palletizing.ikcon(T{i}, q_pick(i-1,:));
 end
 
-%figure
-%Palletizing.plot(q_pick);
-%title('Cartesian Trajectory - Pickup');
+figure
+Palletizing.plot(q_pick);
+title('Cartesian Trajectory - Pickup');
 
-%% Cartesian Trajectory - Place B1
+%% Kartesisk bane - Plassere B1
 
 N = 100;
 s = linspace(0, 1, N);
 
-% Start and end positions (got problems with matrix multiplication)
+% Start og sluttposisjoner (fikk litt problemer med matrise multiplikasjon)
 pA = reshape(transl(T_above_B1), 1, 3);
 pB = reshape(transl(T_B1), 1, 3);
 
-% Linear interpolation of TCP position
+% Lineær interpolering av TCP-posisjon
 p = (1-s')*pA + s'*pB;
 
-% Desired TCP orientation
+% Ønsket TCP-orientering
 R = trotx(pi);
 
-% Construct desired poses
+% Sett opp ønskede poses
 T = cell(N,1);
 
 for i = 1:N
     T{i} = transl(p(i,:)) * R;
 end
 
-% Inverse kinematics
+% Inverse kinematics/Inverskinematikk
 q_place = zeros(N,6);
 q_place(1,:) = q_above_B1;
 
@@ -172,16 +170,14 @@ for i = 2:N
     q_place(i,:) = Palletizing.ikcon(T{i}, q_place(i-1,:));
 end
 
-q_lift = flipud(q_place); % Reverses the matrix, aka the movement
+q_lift = flipud(q_place);   % Reverserer matrisen, altså bevegelsen
 
-% Animate robot
-%figure
-%Palletizing.plot(q_place);
-%title('Cartesian Trajectory - Placement B1');
+% Animere robot
+figure
+Palletizing.plot(q_place);
+title('Cartesian Trajectory - Placement B1');
 
-
-
-%% Combine Trajectories (One cycle)
+%% Kombinerer banene (gir én syklus)
 
 q_total = [
     q_pick;
@@ -191,7 +187,19 @@ q_total = [
     q_return(2:end,:) 
     ];
 
-%% Save robot animation as MP4
+%% Kontroller hastigheter og akselerasjon
+
+qd_max = max(abs(qd), [], 1);
+qdd_max = max(abs(qdd), [], 1);
+
+disp('Maksimal leddhastighet [rad/s]:')
+disp(qd_max)
+
+disp('Maksimal leddakselerasjon [rad/s^2]:')
+disp(qdd_max)
+
+
+%% Lagre robotanimasjon som MP4
 % https://se.mathworks.com/help/matlab/ref/videowriter.html
 % ChatGPT
 

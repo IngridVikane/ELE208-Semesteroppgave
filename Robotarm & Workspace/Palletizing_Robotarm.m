@@ -1,4 +1,4 @@
-%% 6DOF Robot Arm for Palletizing
+%% 6DOF Robotarm for Palletering
 
 clc;
 clear;
@@ -19,7 +19,7 @@ robot.L4 = L4;
 robot.L5 = L5;
 robot.L6 = L6; 
 
-% Homogenous transformation matrix (transformation of robot)
+% Homogen transformasjonsmatrise (transformasjon av robot)
 DHmatrix = @(p) [ ...
     cos(p.theta), -sin(p.theta)*cos(p.alpha),  sin(p.theta)*sin(p.alpha), p.a*cos(p.theta);
     sin(p.theta),  cos(p.theta)*cos(p.alpha), -cos(p.theta)*sin(p.alpha), p.a*sin(p.theta);
@@ -27,7 +27,7 @@ DHmatrix = @(p) [ ...
     0,           0,                       0,                    1];
 
 
-% Robot model
+% Robot modell
 robot.DH(1) = struct('type','R', 'a',0, 'alpha',(sym(pi)/2), 'd',L1, 'theta',q1);
 robot.DH(2) = struct('type','R', 'a',L2, 'alpha',0, 'd',0, 'theta',q2+pi/2);
 robot.DH(3) = struct('type','R', 'a',L3, 'alpha',0, 'd',0, 'theta',q3);
@@ -35,7 +35,7 @@ robot.DH(4) = struct('type','R', 'a',0, 'alpha',(-sym(pi)/2), 'd',L4, 'theta',q4
 robot.DH(5) = struct('type','R', 'a',0, 'alpha',(sym(pi)/2), 'd',L5, 'theta',q5);
 robot.DH(6) = struct('type','R', 'a',0, 'alpha',0, 'd',L6, 'theta',q6);
 
-% Transformation (Palletizing Robot)
+% Transformasjon
 T01 = DHmatrix(robot.DH(1));
 T12 = DHmatrix(robot.DH(2));
 T23 = DHmatrix(robot.DH(3));
@@ -45,7 +45,7 @@ T56 = DHmatrix(robot.DH(6));
 
 T06 = T01*T12*T23*T34*T45*T56
 
-% Sizing the robot (Legg inn faktiske lenkelengder)
+% Sizing the robot
 robot.L1 = 0.1;
 robot.L2 = 0.9;
 robot.L3  = 0.8;
@@ -53,7 +53,7 @@ robot.L4  = 0.2;
 robot.L5  = 0.15;
 robot.L6  = 0.15;
 
-% Create SerialLink model
+% Opprett SerialLink-modell
 
 L(1) = Link('revolute', ...
     'd', robot.L1, ...
@@ -88,31 +88,30 @@ L(6) = Link('revolute', ...
     'alpha', 0);
 
 
-% Create robot
+% Lag en robot
 Palletizing = SerialLink(L, 'name', 'Palletizing Robot');
 
 q = deg2rad([0 0 0 0 0 0]);
 T = Palletizing.fkine(q)
 
 
-% Implement Robots Joint limits
+% Implementer leddbegrensninger for roboter
 Palletizing.qlim = [ ...
-    deg2rad([70  230]);         % Joint 1: revolute
-    -pi/2         pi/2;         % Joint 2: revolute
-    deg2rad([-180 180]);        % Joint 3: revolute
-    -pi         pi;             % Joint 4: revolute
-    -pi         pi;             % Joint 5: revolute
-    -pi         pi];            % Joint 6: revolute
+    deg2rad([70  230]);         % Ledd 1: revolutt
+    -pi/2         pi/2;         % Ledd 2: revolutt
+    deg2rad([-180 180]);        % Ledd 3: revolutt
+    -pi         pi;             % Ledd 4: revolutt
+    -pi         pi;             % Ledd 5: revolutt
+    -pi         pi];            % Ledd 6: revolutt
 
-%% PowerPick 10 Vacuum Gripper
+%% PowerPick 10 vakuumsuger
 
 gripper.name = 'PowerPick 10';
 
 gripper.tcp = [0 0 0.1];        % [m]
 
-% TCP transformation relative to robotbase
+%   TCP-transformasjon i forhold til robotbasen
 T6TCP = transl(gripper.tcp);
 T0TCP = T06 * T6TCP;
 
-Palletizing.tool = transl(gripper.tcp);     % Attaches TCP to robot
-
+Palletizing.tool = transl(gripper.tcp);     % Kobler endeeffektoren til TCP
