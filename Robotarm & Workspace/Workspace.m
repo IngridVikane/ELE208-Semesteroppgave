@@ -1,3 +1,22 @@
+%% Denne filen produserer et arbeidsområde (Workspace) for vår 
+%% 6DOF Palletizing Robotarm.
+
+% % 
+%    Copyright:     HVL
+%    Project:	    ELE308 - Robotmanipulatorer
+%    Author:        Ingrid Vikane
+%    Date created:  Høst 2026
+%    Input: 'Palletizing_Robotarm.m'       
+%           
+%    Output: '6DOF Palletizing Robot Workspace'       
+%---------------------------------------------------------------------%
+%%
+% Note: Denne filen består av transformasjoner mellom robotens base (verdenskoordinatsystemet {0}) 
+% og alle objektene i arbeidsområdet. I tillegg en transformasjon mellom
+% esken og kamera. Disse
+% brukes for å plassere alle objektene i arbeidsområdet. 
+% I tillegg blir arbeidsområdet visualisert ved hjelp av patch. 
+
 run('Palletizing_Robotarm.m');
 
 %% Arbeidsområde/Workspace 
@@ -161,7 +180,7 @@ V = [
 % Konverter til homogene koordinater
 V_hp = [V, ones(size(V,1),1)]';
 
-% Transformer fra {P} til {0} - Implementer korrekt transformasjon
+% Transformer fra {P} til {0}
 V_world_hp = T0P * V_hp;
 
 % Konverter tilbake til kartesiske koordinater

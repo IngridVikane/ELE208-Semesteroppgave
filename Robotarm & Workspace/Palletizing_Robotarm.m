@@ -1,4 +1,20 @@
-%% 6DOF Robotarm for Palletering
+%% Denne filen lager selve robotmodellen, "Palletizing Robot" ved hjelp av 
+%% Peter Corke's Robotics Toolbox. 
+
+% % 
+%    Copyright:     HVL
+%    Project:	    ELE308 - Robotmanipulatorer
+%    Author:        Ingrid Vikane
+%    Date created:  Høst 2026
+%    Input:       
+%           
+%    Output: 'Palletizing Robot'         
+%---------------------------------------------------------------------%
+%%
+% Note: Dette er en 6DOF robotarm som skal benyttes til Palletering. Denne
+% modellen blir hentet inn (run) i flere andre relaterte programmer. 
+
+%% Robotarm for Palletering
 
 clc;
 clear;
@@ -6,8 +22,6 @@ clear;
 syms q1 q2 q3 q4 q5 q6 real
 syms L1 L2 L3 L4 L5 L6 real
 
-
-import ETS3.*
 
 %% 6 DOF Robotarm
 
@@ -43,7 +57,7 @@ T34 = DHmatrix(robot.DH(4));
 T45 = DHmatrix(robot.DH(5));
 T56 = DHmatrix(robot.DH(6));
 
-T06 = T01*T12*T23*T34*T45*T56
+T06 = T01*T12*T23*T34*T45*T56;
 
 % Sizing the robot
 robot.L1 = 0.1;
@@ -92,7 +106,7 @@ L(6) = Link('revolute', ...
 Palletizing = SerialLink(L, 'name', 'Palletizing Robot');
 
 q = deg2rad([0 0 0 0 0 0]);
-T = Palletizing.fkine(q)
+T = Palletizing.fkine(q);
 
 
 % Implementer leddbegrensninger for roboter

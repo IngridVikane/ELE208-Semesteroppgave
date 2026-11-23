@@ -1,3 +1,20 @@
+%% Denne filen regner ut fremoverkinematikk (fk).  
+
+% % 
+%    Copyright:     HVL
+%    Project:	    ELE308 - Robotmanipulatorer
+%    Author:        Ingrid Vikane
+%    Date created:  Høst 2026
+%    Input: 
+%           
+%    Output: T04_hand       
+%---------------------------------------------------------------------%
+%%
+% Note: Denne filen regner ut fk symbolsk for de 4 første leddene i 
+% vår 6DOF robotarm. Dette brukes som sammenligning og validering av utregning for hånd.
+% Se rapporten for DH-tabellen, samt utregning for hånd.
+% NB! Alle små tall anses å være lik 0
+
 %% Forward kinematics - første 4 ledd
 clc;
 clear;
@@ -44,7 +61,7 @@ T04 = T01 * T12 * T23 * T34;
 % Forenkle det symbolske resultatet
 T04_hand = simplify(T04, 'Steps', 10)
 
-%########################################################################%
+%-------------------------------------------------------------------------%
 
 %% Sammenligne T04 for hånd og vha. toolbox
 
@@ -70,6 +87,4 @@ T04_toolbox = robot.fkine([theta1 theta2 theta3 theta4]);
 %% Opprydding
 T04_clean = simplify(vpa(T04_toolbox, 2));
 T04_clean
-
-% Alle små tall = 0
 
