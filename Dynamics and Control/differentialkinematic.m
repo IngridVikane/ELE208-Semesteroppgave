@@ -1,9 +1,22 @@
-%% Differential Kinematics - First position complete move sequence
+%% Denne filen regner ut differensialkinematikken.  
 
-clear;
+% % 
+%    Copyright:     HVL
+%    Project:	    ELE308 - Robotmanipulatorer
+%    Author:        Erlend Østbø
+%    Date created:  Høst 2026
+%    Input: 'Workspace.m'
+%           
+%    Output: 'Joint accelerations - Full palletizing cycle' + qd, qdd
+%---------------------------------------------------------------------%
+%%
+% Note: 
+%
+
+%% Differential Kinematics - First position complete move sequence
 clc;
 
-run('Palletizing_Robotarm.m');
+run('Workspace.m');
 
 %% Positions
 
@@ -19,7 +32,7 @@ T_place = transl(1.0,0.4,pallet.height+0.4)*R;
 
 %% Inverse Kinematics
 
-q0 = deg2rad([90 -30 60 0 30 0]);
+q0 = deg2rad([80 5 70 15 -90 -10]);
 
 qStart = Palletizing.ikcon(T_start,q0);
 qPickup = Palletizing.ikcon(T_pickup,qStart);
@@ -117,7 +130,7 @@ hold on;
 % Joint velocities
 plot(t,rad2deg(qVelocity),'LineWidth',1.5);
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%-------------------------------------------------------------------------%
 
 %Oppdeling av graf laget med ai
 
@@ -146,7 +159,7 @@ ylim([-150 160]);
 
 grid on;
 hold off;
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%-------------------------------------------------------------------------%
 
 %% graf 3 TCP speed 
 
