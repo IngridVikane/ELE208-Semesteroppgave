@@ -91,7 +91,7 @@ camera.z            = 2.00;     % Høyde over bakken
 T_start = transl(0,-1.0,1.0)*trotx(pi);
 
 % Innledende gjetting for invers kinematikk
-qSeed = deg2rad([-75 -20 -20 -30 90 0]);
+qSeed = deg2rad([80 5 70 15 -90 -10]);
 
 %% Visualisering av robot
 q0 = Palletizing.ikcon(T_start,qSeed);

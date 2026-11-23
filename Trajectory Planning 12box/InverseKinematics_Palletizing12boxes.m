@@ -1,7 +1,4 @@
-
-clc;
-clear;
-close all;
+close all; 
 
 %% Load robot and workspace
 run('Palletizing_Robotarm.m');
@@ -45,7 +42,7 @@ T_above_c = transl(0,-1.0,1.0)*R;
 T_pickup  = transl(0,-1.0,0.8)*R;
 
 %% Initial IK
-q0 = deg2rad([-90 -30 60 0 30 0]);
+q0 = deg2rad([80 5 70 15 -90 -10]);
 
 q_above_c = solveIK(Palletizing,T_above_c,q0);
 q_pickup = solveIK(Palletizing,T_pickup,q_above_c);
