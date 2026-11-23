@@ -1,7 +1,24 @@
+%% Denne filen .  
+
+% % 
+%    Copyright:     HVL
+%    Project:	    ELE208 - Robotmanipulatorer
+%    Author:        Erlend Østbø
+%    Co author:     Ingrid Vikane (smoothing vha. tpoly)
+%    Date created:  Høst 2026
+%    Input: 'Workspace.m'
+%           
+%    Output: 
+%---------------------------------------------------------------------%
+%%
+% Note: 
+%
+
 close all; 
+clc;
 
 %% Load robot and workspace
-run('Palletizing_Robotarm.m');
+run('Workspace.m');
 
 % Joint limits are defined in Palletizing_Robotarm.m
 rng(1);
@@ -10,12 +27,12 @@ rng(1);
 N = 100;                 % Points per movement
 % Movement times [s]
 
-t1 = 0.5;  % Start -> Pickup
-t2 = 0.5;  % Pickup -> Start
-t3 = 1.5;  % Start -> Above pallet
-t4 = 0.5;  % Above pallet -> Place
-t5 = 0.5;  % Place -> Above pallet
-t6 = 1.5;  % Above pallet -> Start
+t1 = 0.5;   % Start -> Pickup
+t2 = 0.5;   % Pickup -> Start
+t3 = 1.5;   % Start -> Above pallet
+t4 = 0.5;   % Above pallet -> Place
+t5 = 0.5;   % Place -> Above pallet
+t6 = 1.5;   % Above pallet -> Start
 
 movementTimes = [t1 t2 t3 t4 t5 t6];
 
@@ -255,6 +272,7 @@ end
 %% =========================================
 % CARTESIAN MOVEMENT
 % =========================================
+s = tpoly(0, 1, N);             % tpoly: Brukes for å
 
 function qPath = cartesianMove(robot,qStart,TA,TB,N)
 
@@ -271,9 +289,7 @@ function qPath = cartesianMove(robot,qStart,TA,TB,N)
 
     for i = 2:N
 
-        s = (i-1)/(N-1);
-
-        p = (1-s)*pA+s*pB;
+        p = (1-s(i))*pA + s(i)*pB;
 
         T = transl(p)*r2t(R);
 
