@@ -4,11 +4,13 @@
 %    Copyright:     HVL
 %    Project:	    ELE208 - Robotmanipulatorer
 %    Author:        Erlend Østbø
-%    Co author:     Ingrid Vikane (smoothing av kartesisk bane vha. tpoly, samt fikk ikine til å fungere)
+%    Co author:     Ingrid Vikane (smoothing av kartesisk bane vha. tpoly, samt fikk ikine til å fungere i cartesian movement
+%                   fjernet animeringen og la det inn i en egen fil,
+%                   implementerte lagring av banene til en egen fil vha. AI) 
 %    Date created:  Høst 2026
 %    Input: 'Workspace.m'
 %           
-%    Output: 
+%    Output: 'pallet_cycles.mat'
 %---------------------------------------------------------------------%
 %%
 % Note: 
@@ -291,8 +293,16 @@ function qPath = cartesianMove(robot,qStart,TA,TB,N)
         % Invers Kinematikk: forrige punkt brukes som startgjetning. 
         qNew = robot.ikine(T, 'q0', qPath(i-1,:));
 
-        % Fikk problemer ved bruk av ikine. Bruker angdiff 
-        qPath(i,:) = qPath(i-1,:) + angdiff(qNew, qPath(i-1,:));
+        % Fikk problemer ved bruk av ikine. Brukte originalt angdiff 
+        % qPath(i,:) = qPath(i-1,:) + angdiff(qNew, qPath(i-1,:));
+
+        % angdiff() for matlab og toolbox er forskjellige, så utifra hvilken 
+        % som er øverst i stien vil koden feile.
+        % Dermed blir det heller regnet ut slik: 
+        dq = qNew - qPath(i-1,:);
+        dq = mod(dq + pi, 2*pi) - pi;
+        qPath(i,:) = qPath(i-1,:) + dq;
+
 
         Tactual = robot.fkine(qPath(i,:));
 
