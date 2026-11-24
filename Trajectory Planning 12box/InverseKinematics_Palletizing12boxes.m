@@ -272,7 +272,6 @@ end
 %% =========================================
 % CARTESIAN MOVEMENT
 % =========================================
-s = tpoly(0, 1, N);             % tpoly: Brukes for å
 
 function qPath = cartesianMove(robot,qStart,TA,TB,N)
 
@@ -286,6 +285,8 @@ function qPath = cartesianMove(robot,qStart,TA,TB,N)
 
     qPath = zeros(N,6);
     qPath(1,:) = qStart;
+
+    s = tpoly(0, 1, N);             % tpoly: gir et 5.gradspolynom for å unngå hopp i fart ved start og slutt. 
 
     for i = 2:N
 
@@ -345,7 +346,26 @@ function validatePath(robot,qPath,maxStep)
 
 end
 
+%% =========================================
+% Lagrer banene som segmenter. Funksjon for å lagre banene er laget ved hjelp av AI. 
+% Brukes slik at 'differensialkinematic.m' og 'Dynamics_and_control.m' ikke må
+% kjøre animasjonen hver gang den tester koden. 
+% =========================================
+function cyc = appendSegment(cyc, qSeg, T)
+% Legger et bevegelsessegment (qSeg, varighet T [s]) til slutten av banen cyc.
+% Første punkt i nye segmenter hoppes over, siden det er likt siste punkt i forrige.
+    n    = size(qSeg, 1);
+    tSeg = linspace(0, T, n)';
 
+    if isempty(cyc.q)
+        cyc.q = qSeg;
+        cyc.t = tSeg;
+    else
+        cyc.q = [cyc.q; qSeg(2:end,:)];
+        cyc.t = [cyc.t; cyc.t(end) + tSeg(2:end)];
+    end
+end
+save('pallet_cycles.mat', 'cycles');
 
 %% =========================================
 % ANIMATE ROBOT WITH MOVEMENT TIME
