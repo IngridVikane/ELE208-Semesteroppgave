@@ -4,7 +4,7 @@
 %    Copyright:     HVL
 %    Project:	    ELE208 - Robotmanipulatorer
 %    Author:        Erlend Østbø
-%    Co author:     Ingrid Vikane (smoothing vha. tpoly)
+%    Co author:     Ingrid Vikane (smoothing av kartesisk bane vha. tpoly, samt fikk ikine til å fungere)
 %    Date created:  Høst 2026
 %    Input: 'Workspace.m'
 %           
@@ -288,8 +288,11 @@ function qPath = cartesianMove(robot,qStart,TA,TB,N)
 
         T = transl(p)*r2t(R);
 
-        qPath(i,:) = robot.ikcon( ...
-            T,qPath(i-1,:));
+        % Invers Kinematikk: forrige punkt brukes som startgjetning. 
+        qNew = robot.ikine(T, 'q0', qPath(i-1,:));
+
+        % Fikk problemer ved bruk av ikine. Bruker angdiff 
+        qPath(i,:) = qPath(i-1,:) + angdiff(qNew, qPath(i-1,:));
 
         Tactual = robot.fkine(qPath(i,:));
 
