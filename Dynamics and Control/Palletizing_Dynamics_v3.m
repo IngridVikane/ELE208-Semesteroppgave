@@ -4,11 +4,12 @@
 %    Project:	    ELE208 - Robotmanipulatorer
 %    Author:        Sigurd Hodne  
 %    Coauthor:      Ingrid Vikane: la til faktiske masser, fikk nye
-%                   figurer, verifiserte aktuatorvalg
+%                   verdier og figurer
 %    Date created:  Høst 2026
 %    Input: 'Palletizing_Robotarm' og 'pallet_cycles'
 %
-%    Output: 
+%    Output: Leddmomenter med og uten eske, treghetsmatrise, tyngdekraft-,
+%            Coriolis- og friksjonsbidrag
 %---------------------------------------------------------------------%
 %%
 % Note: 
