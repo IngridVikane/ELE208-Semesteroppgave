@@ -1,8 +1,17 @@
-%% struktur følger lab2 + InverseKinematics_Palletizing12boxes.m
+%% struktur følger lab2 + InverseKinematics_Palletizing12boxes_v2.m (pallet_cycles.mat)
 %
 % VM side først:  cd ~/ros2_ws && source install/setup.bash
+%                 export ROS_DOMAIN_ID=18
 %                 ros2 launch palletizer_robot palletizer.launch.py
 %
+% Oppdatert mot nyeste git-versjon (Palletizing_Robotarm.m +
+% InverseKinematics_Palletizing12boxes_v2.m + rapport Tabell 1):
+%   - L = [0.1, 0.9, 0.8, 0.2, 0.15, 0.15], TCP = Tz(0.10) langs z6
+%   - Konfigurasjonsgren innenfor leddgrenser i Tabell 1:
+%       q1 in [70, 230] deg (78.5..197.6 deg), q5 = -90 deg
+%   - 5.-gradspolynom (tpoly) på kartesiske vertikalbevegelser
+%   - Bevegelsestider fra InverseKinematics_Palletizing12boxes_v2.m:
+%       t1=0.4, tGrip=0.1, t2=0.4, t3=1.5, t4=0.5, tGrip=0.1, t5=0.5, t6=1.5 -> 5.0 s/syklus
 
 %% Part A - Setup ROS 2 and action client
 clc
@@ -26,95 +35,62 @@ ok = waitForServer(client);
 if ~ok, error("Action server not reachable."); end
 disp("Action server available.");
 
-%% Part B - Waypoints & Box Order from InverseKinematics_Palletizing12boxes.m
-%   L = [0.1, 0.9, 0.8, 0.2, 0.15, 0.15].
+%% Part B - Waypoints & Box Order from InverseKinematics_Palletizing12boxes_v2.m
 %   12 boxes = 2 layers of 6, placed back-to-front in Y (+0.4 -> 0.0 -> -0.4),
 %   alternating far/near in X (1.0 -> 0.6):
 %     boxX = [1.0, 0.6, 1.0, 0.6, 1.0, 0.6]
 %     boxY = [0.4, 0.4, 0.0, 0.0, -0.4, -0.4]
 %   Layer 1 (B1..B6): zPlace = 0.544, zAbove = max(1.0, zPlace+0.20) = 1.000
 %   Layer 2 (B7..B12): zPlace = 0.944, zAbove = max(1.0, zPlace+0.20) = 1.144
-Q = struct();
-Q.home      = [0 0 0 0 0 0];
-Q.above_c   = [-1.369438  1.492066 -1.170571 -1.892291  1.570796  0.201358];
-Q.pickup    = [-1.369438  1.535907 -1.472680 -1.634023  1.570796  0.201358];
+boxX = [1.0, 0.6, 1.0, 0.6, 1.0, 0.6];
+boxY = [0.4, 0.4, 0.0, 0.0, -0.4, -0.4];
+palletHeight = 0.144;
+boxHeight    = 0.400;
 
-% Layer 1 (B1..B6) matching boxX/boxY order in InverseKinematics_Palletizing12boxes.m
-Q.above_B1  = [ 0.567286  1.400204 -1.065140 -1.905861  1.570796  2.138082]; % (1.0,  0.4, 1.000)
-Q.above_B2  = [ 0.869038  1.804710 -1.454455 -1.921051  1.570796  2.439834]; % (0.6,  0.4, 1.000)
-Q.above_B3  = [ 0.201358  1.492066 -1.170571 -1.892291  1.570796  1.772154]; % (1.0,  0.0, 1.000)
-Q.above_B4  = [ 0.339837  1.936672 -1.539337 -1.968132  1.570796  1.910633]; % (0.6,  0.0, 1.000)
-Q.above_B5  = [-0.193727  1.400204 -1.065140 -1.905861  1.570796  1.377069]; % (1.0, -0.4, 1.000)
-Q.above_B6  = [-0.306968  1.804710 -1.454455 -1.921051  1.570796  1.263829]; % (0.6, -0.4, 1.000)
-
-% Layer 2 (B7..B12) matching boxX/boxY order in InverseKinematics_Palletizing12boxes.m
-Q.above_B7  = [ 0.567286  1.312607 -0.754255 -2.129148  1.570796  2.138082]; % (1.0,  0.4, 1.144)
-Q.above_B8  = [ 0.869038  1.734301 -1.202015 -2.103082  1.570796  2.439834]; % (0.6,  0.4, 1.144)
-Q.above_B9  = [ 0.201358  1.414779 -0.884048 -2.101528  1.570796  1.772154]; % (1.0,  0.0, 1.144)
-Q.above_B10 = [ 0.339837  1.861340 -1.291318 -2.140818  1.570796  1.910633]; % (0.6,  0.0, 1.144)
-Q.above_B11 = [-0.193727  1.312607 -0.754255 -2.129148  1.570796  1.377069]; % (1.0, -0.4, 1.144)
-Q.above_B12 = [-0.306968  1.734301 -1.202015 -2.103082  1.570796  1.263829]; % (0.6, -0.4, 1.144)
-
-% Place poses for Layer 1 (B1..B6)
-Q.place_B1  = [ 0.567286  1.422787 -1.670513 -1.323070  1.570796  2.138082]; % (1.0,  0.4, 0.544)
-Q.place_B2  = [ 0.869038  1.838469 -2.057658 -1.351608  1.570796  2.439834]; % (0.6,  0.4, 0.544)
-Q.place_B3  = [ 0.201358  1.508194 -1.766348 -1.312642  1.570796  1.772154]; % (1.0,  0.0, 0.544)
-Q.place_B4  = [ 0.339837  2.000074 -2.156132 -1.414739  1.570796  1.910633]; % (0.6,  0.0, 0.544)
-Q.place_B5  = [-0.193727  1.422787 -1.670513 -1.323070  1.570796  1.377069]; % (1.0, -0.4, 0.544)
-Q.place_B6  = [-0.306968  1.838469 -2.057658 -1.351608  1.570796  1.263829]; % (0.6, -0.4, 0.544)
-
-% Place poses for Layer 2 (B7..B12)
-Q.place_B7  = [ 0.567286  1.420467 -1.162425 -1.828838  1.570796  2.138082]; % (1.0,  0.4, 0.944)
-Q.place_B8  = [ 0.869038  1.824109 -1.541980 -1.852926  1.570796  2.439834]; % (0.6,  0.4, 0.944)
-Q.place_B9  = [ 0.201358  1.510668 -1.263630 -1.817834  1.570796  1.772154]; % (1.0,  0.0, 0.944)
-Q.place_B10 = [ 0.339837  1.958872 -1.626638 -1.903031  1.570796  1.910633]; % (0.6,  0.0, 0.944)
-Q.place_B11 = [-0.193727  1.420467 -1.162425 -1.828838  1.570796  1.377069]; % (1.0, -0.4, 0.944)
-Q.place_B12 = [-0.306968  1.824109 -1.541980 -1.852926  1.570796  1.263829]; % (0.6, -0.4, 0.944)
-
-% Target TCP poses [x y z] (trotx(pi) orientation for all).
 T = struct();
-T.above_c   = [ 0  -1.0  1.000];   T.pickup    = [ 0  -1.0  0.800];
-T.above_B1  = [1.0  0.4  1.000];   T.place_B1  = [1.0  0.4  0.544];
-T.above_B2  = [0.6  0.4  1.000];   T.place_B2  = [0.6  0.4  0.544];
-T.above_B3  = [1.0  0.0  1.000];   T.place_B3  = [1.0  0.0  0.544];
-T.above_B4  = [0.6  0.0  1.000];   T.place_B4  = [0.6  0.0  0.544];
-T.above_B5  = [1.0 -0.4  1.000];   T.place_B5  = [1.0 -0.4  0.544];
-T.above_B6  = [0.6 -0.4  1.000];   T.place_B6  = [0.6 -0.4  0.544];
-T.above_B7  = [1.0  0.4  1.144];   T.place_B7  = [1.0  0.4  0.944];
-T.above_B8  = [0.6  0.4  1.144];   T.place_B8  = [0.6  0.4  0.944];
-T.above_B9  = [1.0  0.0  1.144];   T.place_B9  = [1.0  0.0  0.944];
-T.above_B10 = [0.6  0.0  1.144];   T.place_B10 = [0.6  0.0  0.944];
-T.above_B11 = [1.0 -0.4  1.144];   T.place_B11 = [1.0 -0.4  0.944];
-T.above_B12 = [0.6 -0.4  1.144];   T.place_B12 = [0.6 -0.4  0.944];
+T.above_c = [0.0, -1.0, 1.000];
+T.pickup  = [0.0, -1.0, 0.800];
+for k = 1:12
+    layer  = ceil(k / 6);
+    posIdx = mod(k - 1, 6) + 1;
+    zPlace = palletHeight + (layer - 1) * boxHeight + boxHeight;
+    zAbove = max(1.000, zPlace + 0.200);
+    T.(['above_B' num2str(k)]) = [boxX(posIdx), boxY(posIdx), zAbove];
+    T.(['place_B' num2str(k)]) = [boxX(posIdx), boxY(posIdx), zPlace];
+end
 
+% Compute & verify all 26 waypoints against DH FK and Report Tabell 1 limits
+% URDF theta limits matching Palletizing_Robotarm.m qlim (theta2=q2+pi/2, theta4=q4-pi/2):
+jLower = [deg2rad(70),  0,    -pi, -3*pi/2, -pi, -pi];
+jUpper = [deg2rad(230), pi,    pi,    pi/2,  pi,  pi];
+
+Q = struct();
 Rd = diag([1 -1 -1]);   % pose plasserer tool nedover på hver pose
 for name = fieldnames(T)'
     n = name{1};
-    if any(abs(Q.(n)) > pi), error('%s violates joint limits +/-pi', n); end
+    Q.(n) = palletizer_ikine(T.(n));
+    if any(Q.(n) < jLower - 1e-6) || any(Q.(n) > jUpper + 1e-6)
+        error('%s violates Tabell 1 joint limits', n);
+    end
     Mt = eye(4); Mt(1:3,1:3) = Rd; Mt(1:3,4) = T.(n).';
     e = norm(palletizer_fkine(Q.(n)) - Mt);
     if e > 1e-5, error('%s: FK residual %.3e - waypoint/target mismatch', n, e); end
 end
-disp("All 26 pick/place waypoints verified against the DH chain (< 1e-5, full pose incl. tool).");
+disp("All 26 pick/place waypoints verified against DH chain (< 1e-5) and Tabell 1 limits.");
 
-% Movement times [s] from InverseKinematics_Palletizing12boxes.m (5.0 s total per cycle):
-%   t1=0.5 (Start->Pickup), t2=0.5 (Pickup->Start), t3=1.5 (Start->Above pallet),
-%   t4=0.5 (Above pallet->Place), t5=0.5 (Place->Above pallet), t6=1.5 (Above pallet->Start)
-movementTimes = [0.5, 0.5, 1.5, 0.5, 0.5, 1.5];
+% Movement times [s] from InverseKinematics_Palletizing12boxes_v2.m (5.0 s total/cycle):
+%   t1=0.4 (Start->Pickup), tGrip=0.1, t2=0.4 (Pickup->Start),
+%   t3=1.5 (Start->Above pallet), t4=0.5 (Above->Place), tGrip=0.1,
+%   t5=0.5 (Place->Above), t6=1.5 (Above->Start)
+t1 = 0.4; t2 = 0.4; t3 = 1.5; t4 = 0.5; t5 = 0.5; t6 = 1.5;
+tGrip  = 0.1;
 T_init = 1.5;   % initial move to above_c
-N_cart = 5;     % intermediate Cartesian steps per vertical stroke (cartesianMove)
+N_cart = 6;     % intermediate quintic Cartesian steps per vertical stroke
 
 %% Part B2 - unwrap commands relative to the arm's CURRENT accumulated state
-%   gz bullet-featherstone does NOT enforce the URDF joint limits, so joint
-%   positions accumulate unboundedly and JTC interpolates from the accumulated
-%   state: a wrapped command on the far side of the wrap makes the joint spin
-%   multiple revolutions (observed: joint_6 ratcheted to -4800 rad). Every
-%   commanded point is therefore made CONTINUOUS with the previous command
-%   (shortest angular step), starting from the live /joint_states position.
-jsSub = ros2subscriber(pallet_node, "/joint_states");
+jsSub = ros2subscriber(pallet_node, "/joint_states", "sensor_msgs/JointState");
 jsMsg = receive(jsSub, 10);
-qref = reshape(jsMsg.position, 1, []);  % live accumulated positions (1x6)
-assert(numel(qref) == 6, "expected 6 joint positions, got %d", numel(qref));
+qref = extractOrderedJoints(jsMsg, joints);
 disp("Current joint state (accumulated):"); disp(qref);
 
 %% Part C - Move to above-conveyor, then 12 box cycles (2 layers of 6)
@@ -128,27 +104,31 @@ for k = 1:12
     pP = T.(['place_B' num2str(k)]);
     qA = Q.(['above_B' num2str(k)]);
 
-    % Build cycle trajectory matching InverseKinematics_Palletizing12boxes.m:
-    %   1) cartesianMove: above_c -> pickup  (t1 = 0.5 s)
-    %   2) cartesianMove: pickup  -> above_c (t2 = 0.5 s)
-    %   3) jtraj:         above_c -> above_B (t3 = 1.5 s)
-    %   4) cartesianMove: above_B -> place_B (t4 = 0.5 s)
-    %   5) cartesianMove: place_B -> above_B (t5 = 0.5 s)
-    %   6) jtraj:         above_B -> above_c (t6 = 1.5 s)
+    % Build cycle trajectory matching InverseKinematics_Palletizing12boxes_v2.m:
+    %   1) tpoly cartesianMove: above_c -> pickup  (t1 = 0.4 s)
+    %   2) vacuum ON dwell at pickup               (tGrip = 0.1 s)
+    %   3) tpoly cartesianMove: pickup  -> above_c (t2 = 0.4 s)
+    %   4) joint-space move:    above_c -> above_B (t3 = 1.5 s)
+    %   5) tpoly cartesianMove: above_B -> place_B (t4 = 0.5 s)
+    %   6) vacuum OFF dwell at place_B             (tGrip = 0.1 s)
+    %   7) tpoly cartesianMove: place_B -> above_B (t5 = 0.5 s)
+    %   8) joint-space return:  above_B -> above_c (t6 = 1.5 s) -> 5.0 s total
     q_down  = cartesianPath(T.above_c, T.pickup, N_cart);
-    q_up    = flipud(q_down(1:end-1, :));
+    q_up    = cartesianPath(T.pickup, T.above_c, N_cart);
     q_place = cartesianPath(pA, pP, N_cart);
-    q_lift  = flipud(q_place(1:end-1, :));
+    q_lift  = cartesianPath(pP, pA, N_cart);
 
-    segs = [q_down; q_up; qA; q_place; q_lift; Q.above_c];
+    segs = [q_down; q_down(end,:); q_up; qA; q_place; q_place(end,:); q_lift; Q.above_c];
 
-    t1 = linspace(0, movementTimes(1), N_cart + 1); t1 = t1(2:end);
-    t2 = movementTimes(1) + linspace(0, movementTimes(2), N_cart + 1); t2 = t2(2:end);
-    t3 = sum(movementTimes(1:3));
-    t4 = t3 + linspace(0, movementTimes(4), N_cart + 1); t4 = t4(2:end);
-    t5 = t3 + movementTimes(4) + linspace(0, movementTimes(5), N_cart + 1); t5 = t5(2:end);
-    t6 = sum(movementTimes);
-    t_vec = [t1, t2, t3, t4, t5, t6];
+    tt1 = linspace(0, t1, N_cart + 1);               tt1 = tt1(2:end);
+    ttG1 = tt1(end) + tGrip;
+    tt2 = ttG1 + linspace(0, t2, N_cart + 1);        tt2 = tt2(2:end);
+    tt3 = tt2(end) + t3;
+    tt4 = tt3 + linspace(0, t4, N_cart + 1);         tt4 = tt4(2:end);
+    ttG2 = tt4(end) + tGrip;
+    tt5 = ttG2 + linspace(0, t5, N_cart + 1);        tt5 = tt5(2:end);
+    tt6 = tt5(end) + t6;
+    t_vec = [tt1, ttG1, tt2, tt3, tt4, ttG2, tt5, tt6];
 
     U = zeros(size(segs));
     for i = 1:size(segs,1)
@@ -163,11 +143,12 @@ disp("Pallet is full!");
 
 %% Local functions
 function Qpath = cartesianPath(pStart, pEnd, N)
-    % Straight-line Cartesian interpolation from pStart to pEnd (excluding
-    % pStart, including pEnd) solved via exact closed-form DH IK.
+    % Straight-line Cartesian interpolation with 5th-order polynomial time scaling
+    % (tpoly, matching InverseKinematics_Palletizing12boxes_v2.m & Report Sec 2.5).
     Qpath = zeros(N, 6);
     for i = 1:N
-        s = i / N;
+        u = i / N;
+        s = 10*u^3 - 15*u^4 + 6*u^5;
         p = (1 - s) * pStart + s * pEnd;
         Qpath(i, :) = palletizer_ikine(p);
     end
@@ -175,20 +156,36 @@ end
 
 function q = palletizer_ikine(p)
     % Exact closed-form IK for L = [0.1, 0.9, 0.8, 0.2, 0.15, 0.15],
-    % tool = Tz(0.10), downward orientation Rd = diag([1, -1, -1]).
+    % tool = Tz(0.10), downward orientation Rd = diag([1, -1, -1]),
+    % on the Palletizing_Robotarm.m / pallet_cycles.mat branch
+    % (q1 in [70, 230] deg, q5 = -pi/2).
     L1 = 0.1; L2 = 0.9; L3 = 0.8; d4 = 0.2; d5 = 0.15;
     x = p(1); y = p(2); z = p(3);
     r0 = sqrt(x^2 + y^2 - d4^2);
-    q1 = atan2(y, x) + atan2(d4, r0);
-    r  = r0 - d5;
+    q1 = atan2(y, x) + pi - atan2(d4, r0);
+    while q1 < deg2rad(70),  q1 = q1 + 2*pi; end
+    while q1 > deg2rad(230), q1 = q1 - 2*pi; end
+    r  = -(r0 - d5);
     zw = z + 0.25 - L1;
     c3 = max(-1, min(1, (r^2 + zw^2 - L2^2 - L3^2) / (2 * L2 * L3)));
-    q3 = -acos(c3);
+    q3 = acos(c3);
     q2 = atan2(zw, r) - atan2(L3 * sin(q3), L2 + L3 * cos(q3));
-    q4 = -pi/2 - q2 - q3;
-    q5 = pi/2;
-    q6 = q1 + pi/2;
+    q4 = pi/2 - q2 - q3;
+    q5 = -pi/2;
+    q6 = q1 - pi/2;
     q  = [q1, q2, q3, q4, q5, q6];
+end
+
+function q = extractOrderedJoints(jsMsg, jointNames)
+    q = zeros(1, numel(jointNames));
+    for i = 1:numel(jointNames)
+        idx = find(strcmp(jsMsg.name, jointNames{i}), 1);
+        if ~isempty(idx)
+            q(i) = jsMsg.position(idx);
+        else
+            q(i) = jsMsg.position(i);
+        end
+    end
 end
 
 function qc = unwrapPt(qw, qref)
@@ -221,7 +218,7 @@ function runTraj(client, joints, Q, tSec)
         disp(resultMsg);
         error("Trajectory failed with status %d", exStatus);
     end
-    fprintf("  trajectory OK (%d points)\n", size(Q,1));
+    fprintf("  trajectory OK (%d points, %.2f s)\n", size(Q,1), tSec(end));
 end
 
 function pt = makePoint(positions, tSec)
@@ -244,8 +241,7 @@ function T = dhcol(d, a, al)
 end
 
 function M = palletizer_fkine(q)
-    % 12box link lengths, L2/L3 switched 10 Nov 2026 (Palletizing_Robotarm.m),
-    % standard DH, tool = Tz(0.1) along z6 (report eq. 2).
+    % 12box link lengths, standard DH, tool = Tz(0.1) along z6 (report eq. 3).
     L = [0.1, 0.9, 0.8, 0.2, 0.15, 0.15];
     dj = [L(1), 0, 0, L(4), L(5), L(6)];
     aj = [0, L(2), L(3), 0, 0, 0];

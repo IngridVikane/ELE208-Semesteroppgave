@@ -47,17 +47,19 @@ T_pickup    = [0.0, -1.0, 0.800];
 T_cam_clear = [0.45, -0.65, 1.000];
 Q_cam_clear = palletizer_ikine(T_cam_clear, 0.0);
 
-% Camera intrinsics & extrinsics (from camera.urdf.xacro & robot_description.urdf.xacro)
+% Camera intrinsics & extrinsics matching Workspace.m & Report Sec 3.1/3.2
+% (T0K = Trans(0, -1.25, 2.0) * Rotx(pi) -> camera_link at (0, -1.25, 2.0))
 camCfg = struct();
-camCfg.pos   = [0.0, -1.0, 1.80];   % camera_link origin in world {0}
-camCfg.zTop  = 0.800;               % box top surface height on conveyor [m]
-camCfg.width = 640;
-camCfg.height = 480;
-camCfg.hfov  = 1.047;               % [rad] (60 deg)
-camCfg.fx    = (camCfg.width / 2) / tan(camCfg.hfov / 2);
-camCfg.fy    = camCfg.fx;
-camCfg.cx    = camCfg.width / 2;
-camCfg.cy    = camCfg.height / 2;
+camCfg.pos      = [0.0, -1.25, 2.00];  % camera_link origin in world {0}
+camCfg.pickupXY = [0.0, -1.00];        % expected box pickup center [m]
+camCfg.zTop     = 0.800;               % box top surface height on conveyor [m]
+camCfg.width    = 640;
+camCfg.height   = 480;
+camCfg.hfov     = 1.047;               % [rad] (60 deg)
+camCfg.fx       = (camCfg.width / 2) / tan(camCfg.hfov / 2);
+camCfg.fy       = camCfg.fx;
+camCfg.cx       = camCfg.width / 2;
+camCfg.cy       = camCfg.height / 2;
 
 % Optional pretrained YOLO detector check (uses Computer Vision / Deep Learning
 % Toolbox yolov8ObjectDetector / yolov4ObjectDetector if installed, otherwise
@@ -113,31 +115,36 @@ for k = 1:12
     pAboveB = [xSlot, ySlot, zAbove];
     pPlaceB = [xSlot, ySlot, zPlace];
 
-    % 3. Build trajectory with TCP rotated by psi_box at pickup, and 0 deg at place:
-    %    - Approach above_c with TCP rotated to psi_box (0.45 s)
-    %    - Cartesian descent above_c -> pickup at psi_box (0.50 s)
-    %    - Cartesian ascent  pickup  -> above_c at psi_box (0.50 s)
+    % 3. Build trajectory with TCP rotated by psi_box at pickup, and 0 deg at place,
+    %    using 5th-order polynomial (tpoly) Cartesian vertical strokes and tGrip=0.10 s
+    %    vacuum dwell (matching InverseKinematics_Palletizing12boxes_v2.m, 4.90 s <= 5 s):
+    %    - Approach above_c with TCP rotated to psi_box (0.40 s)
+    %    - Cartesian descent above_c -> pickup at psi_box (0.40 s) + vacuum ON dwell (0.10 s)
+    %    - Cartesian ascent  pickup  -> above_c at psi_box (0.40 s)
     %    - Swing to above_Bk while rotating TCP back to 0 deg (1.35 s)
-    %    - Cartesian descent above_Bk -> place_Bk at 0 deg (0.50 s)
-    %    - Cartesian ascent  place_Bk -> above_Bk at 0 deg (0.50 s)
-    %    - Return to camera-clear standby pose T_cam_clear (1.10 s) -> 4.90 s total (< 5 s)
+    %    - Cartesian descent above_Bk -> place_Bk at 0 deg (0.45 s) + vacuum OFF dwell (0.10 s)
+    %    - Cartesian ascent  place_Bk -> above_Bk at 0 deg (0.45 s)
+    %    - Return to camera-clear standby pose T_cam_clear (1.25 s) -> 4.90 s total (< 5 s)
     q_above_c_rot = palletizer_ikine(T_above_c, psi_box);
     q_down        = cartesianPath(T_above_c, T_pickup, psi_box, N_cart);
-    q_up          = flipud(q_down(1:end-1, :));
+    q_up          = cartesianPath(T_pickup, T_above_c, psi_box, N_cart);
     q_above_B     = palletizer_ikine(pAboveB, 0.0);
     q_place       = cartesianPath(pAboveB, pPlaceB, 0.0, N_cart);
-    q_lift        = flipud(q_place(1:end-1, :));
+    q_lift        = cartesianPath(pPlaceB, pAboveB, 0.0, N_cart);
 
-    segs = [q_above_c_rot; q_down; q_up; q_above_B; q_place; q_lift; Q_cam_clear];
+    segs = [q_above_c_rot; q_down; q_down(end,:); q_up; q_above_B; q_place; q_place(end,:); q_lift; Q_cam_clear];
 
-    t_prep = 0.45;
-    t_down = t_prep + linspace(0, 0.50, N_cart + 1); t_down = t_down(2:end);
-    t_up   = t_down(end) + linspace(0, 0.50, N_cart + 1); t_up = t_up(2:end);
+    tGrip  = 0.10;
+    t_prep = 0.40;
+    t_down = t_prep + linspace(0, 0.40, N_cart + 1); t_down = t_down(2:end);
+    t_g1   = t_down(end) + tGrip;
+    t_up   = t_g1 + linspace(0, 0.40, N_cart + 1);   t_up = t_up(2:end);
     t_sw1  = t_up(end) + 1.35;
-    t_pl   = t_sw1 + linspace(0, 0.50, N_cart + 1); t_pl = t_pl(2:end);
-    t_lf   = t_pl(end) + linspace(0, 0.50, N_cart + 1); t_lf = t_lf(2:end);
-    t_ret  = t_lf(end) + 1.10;
-    t_vec  = [t_prep, t_down, t_up, t_sw1, t_pl, t_lf, t_ret];
+    t_pl   = t_sw1 + linspace(0, 0.45, N_cart + 1);  t_pl = t_pl(2:end);
+    t_g2   = t_pl(end) + tGrip;
+    t_lf   = t_g2 + linspace(0, 0.45, N_cart + 1);   t_lf = t_lf(2:end);
+    t_ret  = t_lf(end) + 1.25;
+    t_vec  = [t_prep, t_down, t_g1, t_up, t_sw1, t_pl, t_g2, t_lf, t_ret];
 
     U = zeros(size(segs));
     for i = 1:size(segs, 1)
@@ -239,7 +246,10 @@ function det = runYoloObbPipeline(imgRgb, camCfg, yoloDetector)
     rTopThresh = 0.80 * prctileFallback(rVals, 95);
     topMask = orangeMask & (R >= rTopThresh);
 
-    % Connected components: pick component closest to conveyor center (cx, cy)
+    % Connected components: pick component closest to expected pickup pixel
+    dzPick = camCfg.pos(3) - camCfg.zTop;
+    uPick  = camCfg.cx - (camCfg.pickupXY(2) - camCfg.pos(2)) * (camCfg.fx / dzPick);
+    vPick  = camCfg.cy - (camCfg.pickupXY(1) - camCfg.pos(1)) * (camCfg.fy / dzPick);
     cc = bwconncomp(topMask);
     if cc.NumObjects == 0
         return;
@@ -253,7 +263,7 @@ function det = runYoloObbPipeline(imgRgb, camCfg, yoloDetector)
             continue;
         end
         [rows, cols] = ind2sub(size(topMask), pix);
-        distCenter = hypot(mean(cols) - camCfg.cx, mean(rows) - camCfg.cy);
+        distCenter = hypot(mean(cols) - uPick, mean(rows) - vPick);
         score = areaPx - 80 * distCenter;
         if score > bestScore
             bestScore = score;
@@ -404,10 +414,12 @@ end
 %  ========================================================================
 
 function Qpath = cartesianPath(pStart, pEnd, psiYaw, N)
-    % Straight-line Cartesian interpolation from pStart to pEnd with TCP yaw psiYaw
+    % Straight-line Cartesian interpolation with 5th-order polynomial (tpoly)
+    % time scaling and TCP yaw psiYaw.
     Qpath = zeros(N, 6);
     for i = 1:N
-        s = i / N;
+        u = i / N;
+        s = 10*u^3 - 15*u^4 + 6*u^5;
         p = (1 - s) * pStart + s * pEnd;
         Qpath(i, :) = palletizer_ikine(p, psiYaw);
     end
@@ -417,20 +429,24 @@ function q = palletizer_ikine(p, psiYaw)
     % Exact closed-form IK for L = [0.1, 0.9, 0.8, 0.2, 0.15, 0.15],
     % tool = Tz(0.10), downward TCP orientation rotated by yaw psiYaw around +Z_world:
     %   R_TCP = Rz(psiYaw) * diag([1, -1, -1])
+    % on the Palletizing_Robotarm.m / pallet_cycles.mat branch
+    % (q1 in [70, 230] deg, q5 = -pi/2).
     if nargin < 2, psiYaw = 0.0; end
     L1 = 0.1; L2 = 0.9; L3 = 0.8; d4 = 0.2; d5 = 0.15;
     x = p(1); y = p(2); z = p(3);
     r0 = sqrt(x^2 + y^2 - d4^2);
-    q1 = atan2(y, x) + atan2(d4, r0);
-    r  = r0 - d5;
+    q1 = atan2(y, x) + pi - atan2(d4, r0);
+    while q1 < deg2rad(70),  q1 = q1 + 2*pi; end
+    while q1 > deg2rad(230), q1 = q1 - 2*pi; end
+    r  = -(r0 - d5);
     zw = z + 0.25 - L1;
     c3 = max(-1, min(1, (r^2 + zw^2 - L2^2 - L3^2) / (2 * L2 * L3)));
-    q3 = -acos(c3);
+    q3 = acos(c3);
     q2 = atan2(zw, r) - atan2(L3 * sin(q3), L2 + L3 * cos(q3));
-    q4 = -pi/2 - q2 - q3;
-    q5 = pi/2;
+    q4 = pi/2 - q2 - q3;
+    q5 = -pi/2;
     % Since z6 points straight down (-Z_world), subtracting psiYaw rotates TCP by +psiYaw around +Z_world
-    q6 = q1 + pi/2 - psiYaw;
+    q6 = q1 - pi/2 - psiYaw;
     q  = [q1, q2, q3, q4, q5, q6];
 end
 
