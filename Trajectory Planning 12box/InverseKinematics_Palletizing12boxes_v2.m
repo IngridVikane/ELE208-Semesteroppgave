@@ -77,6 +77,8 @@ stackHeight = zeros(1,numPositions);
 % Track height at each pallet position
 stackHeight = zeros(1,numPositions);
 
+tcpErr = zeros(numBoxes, 3);        % [plukk, over pall, plassering] i mm
+
 %% Main loop - one box at a time
 
 for boxNumber = 1:numBoxes
@@ -162,6 +164,12 @@ for boxNumber = 1:numBoxes
 
     cyc = appendSegment(cyc, q_place, t4); 
 
+    % Kontroll av TCP-avvik med foroverkinematikk
+    tcpErr(boxNumber,:) = [ ...
+        tcpError(Palletizing, q_down(end,:),  T_pickup), ...
+        tcpError(Palletizing, q_above_B,      T_above_B), ...
+        tcpError(Palletizing, q_place(end,:), T_B)];
+
     % Simulated gripper opens
     fprintf('Gripper OPEN\n');
     cyc = appendSegment(cyc, repmat(q_place(end,:), 5, 1), tGrip);
@@ -200,6 +208,10 @@ for boxNumber = 1:numBoxes
 end
 
 disp('Pallet is full!');
+
+fprintf('\nTCP-avvik [mm] (plukk / over pall / plassering):\n');
+disp(tcpErr);
+fprintf('Største TCP-avvik: %.4f mm\n', max(tcpErr(:)));
 
 %% Lagre alle banene
 save('pallet_cycles.mat', 'cycles');
@@ -331,9 +343,9 @@ function qPath = cartesianMove(robot,qStart,TA,TB,N)
 
 end
 
-%% =========================================
+%% -----------------------------------------
 % VALIDATE JOINT TRAJECTORY
-% =========================================
+% ------------------------------------------
 
 function validatePath(robot,qPath,maxStep)
 
@@ -351,6 +363,18 @@ function validatePath(robot,qPath,maxStep)
         error('Large joint jump detected');
     end
 
+end
+
+%% -----------------------------------------
+% TCP-AVVIK
+% ------------------------------------------
+function e = tcpError(robot, q, Ttarget)
+% Avstand [mm] mellom TCP-posisjonen for leddvinklene q og ønsket pose Ttarget
+Tq = robot.fkine(q);
+if isa(Tq, 'SE3')
+    Tq = Tq.T;
+end
+e = 1e3 * norm(Tq(1:3,4) - Ttarget(1:3,4));
 end
 
 %% -------------------------------------------------------------------------%%
@@ -371,4 +395,6 @@ function cyc = appendSegment(cyc, qSeg, T)
         cyc.t = [cyc.t; cyc.t(end) + tSeg(2:end)];
     end
 end
+
+
 
