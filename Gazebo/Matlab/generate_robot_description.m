@@ -28,10 +28,10 @@ function generate_robot_description()
 %   T = R*diag(scnat) with R a proper rotation; emitted URDF placement
 %   p(n) = R*(scnat.*n) + t puts the mesh bbox center on the segment midpoint
 %   and spans exactly [0, Lseg] (their visual origin offsets are absorbed by
-%   the centering). Inertial = box from the placed bbox, mass from the user's
-%   box-link model (Dynamics and Control/Masses.m: SOLID Al box links,
-%   w=h=[0.05 0.05 0.05 0.02 0.02 0.02], rho=2700, V=L.*h.*w). Base link keeps
-%   our own box (their base mesh unused).
+    % Inertial = box from the placed bbox, mass from the updated hollow
+    % rectangular aluminum link model in the project report (Sec. 2.7,
+    % b=[0.10 0.10 0.10 0.04 0.04 0.04] m, wall t=0.005 m, rho=2700 kg/m^3).
+    % Base link keeps our own box (their base mesh unused).
 
     thisDir = fileparts(mfilename('fullpath'));
     pkgDir  = fullfile(thisDir, '..', 'vm', 'palletizer_robot');
@@ -93,7 +93,7 @@ end
 function o = mesh_placements(O)
 % UR5e meshes onto OUR link frames (see function header comment above).
 names = {'shoulder','upperarm','forearm','wrist1','wrist2','wrist3'};
-mass  = [0.675 6.075 5.4 0.216 0.162 0.162];    % Masses.m solid box-link masses (kg)
+mass  = [0.513 4.617 4.104 0.378 0.284 0.284];  % Updated hollow Al tube masses from report Sec 2.7 (kg)
 % their joint-origin rpy (ur5e default_kinematics.yaml) and the visual-origin
 % rpy used for each mesh in their ur_macro.xacro:
 tr = [0 0 0; pi/2 0 0; 0 0 0; 0 0 0; pi/2 0 0; pi/2 pi pi];
@@ -188,6 +188,11 @@ function txt = make_xacro(O, o, L)
     A{end+1} = '    <xacro:inertial_box length="0.25" width="0.25" height="0.16" density="${7800/40}"><origin xyz="0 0 -0.08" rpy="0 0 0"/></xacro:inertial_box>'; %#ok<AGROW>
     A{end+1} = '  </link>'; %#ok<AGROW>
 
+    % Joint limits from Palletizing_Robotarm.m / Report Tabell 1 expressed in
+    % URDF DH theta coordinates (theta2 = q2 + pi/2, theta4 = q4 - pi/2):
+    jLower = [deg2rad(70),  0,    -pi, -3*pi/2, -pi, -pi];
+    jUpper = [deg2rad(230), pi,    pi,    pi/2,  pi,  pi];
+
     for j = 1:6
         % joint_j: parent = previous link, origin O{j}
         if j == 1, par = 'base_link'; else, par = sprintf('link_%d_link', j-1); end
@@ -197,7 +202,7 @@ function txt = make_xacro(O, o, L)
             f6(eulZYX(O{j}(1:3,1:3))) '"/>']; %#ok<AGROW>
         A{end+1} = sprintf('    <parent link="%s"/><child link="link_%d_link"/>', par, j); %#ok<AGROW>
         A{end+1} = '    <axis xyz="0 0 1"/>'; %#ok<AGROW>
-        A{end+1} = '    <limit effort="100" velocity="6.28" lower="-${pi}" upper="${pi}"/>'; %#ok<AGROW>
+        A{end+1} = sprintf('    <limit effort="300" velocity="6.28" lower="%.6f" upper="%.6f"/>', jLower(j), jUpper(j)); %#ok<AGROW>
         A{end+1} = '    <dynamics damping="0.7" friction="1.0"/>'; %#ok<AGROW>
         A{end+1} = '  </joint>'; %#ok<AGROW>
 
@@ -260,9 +265,9 @@ function txt = make_xacro(O, o, L)
     A{end+1} = '       No tool0 link: its fixed joint would be lumped into link_6 by the'; %#ok<AGROW>
     A{end+1} = '       bullet-featherstone plugin and invert the joint_6 motor sign. -->'; %#ok<AGROW>
 
-    % ---- camera (course pattern, NOT generated - see camera.urdf.xacro) -----
+    % ---- camera matching Workspace.m & Report Sec 3.1/3.2 (T0K = Trans(0,-1.25,2.0)) ----
     A{end+1} = '';
-    A{end+1} = '  <xacro:camera_sensor parent_link="base_footprint" x="0" y="-1.0" z="1.8"';
+    A{end+1} = '  <xacro:camera_sensor parent_link="base_footprint" x="0" y="-1.25" z="2.0"';
     A{end+1} = '      roll="0" pitch="1.5708" yaw="0"/>';
     A{end+1} = '';
     A{end+1} = '</robot>';

@@ -138,7 +138,8 @@ def box_model_sdf(name, pose=None):
     """
     s = 0.4
     s_col_xy = 0.34
-    i_flat = 5.0 * 2 * s ** 2 / 12  # uniform kube inertia for 5kg masse
+    box_mass = 10.0  # Updated payload mass matching report Sec 2.7 & Palletizing_Dynamics_v2.m
+    i_flat = box_mass * 2 * s ** 2 / 12  # uniform kube inertia for 10 kg masse
     m = ET.Element('model', {'name': name})
     link = ET.SubElement(m, 'link', {'name': 'link'})
     box = ET.SubElement(link, 'collision', {'name': 'collision'})
@@ -162,7 +163,7 @@ def box_model_sdf(name, pose=None):
         c = ET.SubElement(mat, tag)
         c.text = '0.8 0.5 0.2 1'
     inertial = ET.SubElement(link, 'inertial')
-    ET.SubElement(inertial, 'mass').text = '5.0'
+    ET.SubElement(inertial, 'mass').text = f'{box_mass:.1f}'
     ii = ET.SubElement(inertial, 'inertia')
     for a in ('ixx', 'iyy', 'izz'):
         ET.SubElement(ii, a).text = f'{i_flat:.4f}'
