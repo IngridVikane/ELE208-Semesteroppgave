@@ -1,4 +1,22 @@
 function generate_robot_description()
+%% Denne filen genererer URDF/xacro-beskrivelsen av palleteringsroboten for Gazebo.
+
+%    Copyright:     HVL
+%    Project:       ELE208 - Robotmanipulatorer
+%    Author:        Christoffer Træet Herland
+%    Date created:  Høst 2026
+%    Input:         DH-parametre og lenkelengder fra 'Palletizing_Robotarm.m', UR5e-mesher
+%
+%    Output:        'robot_description.urdf.xacro'
+%---------------------------------------------------------------------%
+%%
+% Note: Bygger 'robot_description.urdf.xacro' med standard DH-kjede
+% (L = [0.1, 0.9, 0.8, 0.2, 0.15, 0.15] m), skalerte UR5e-mesher,
+% PowerPick 10-vakuumgriper bakt inn i link_6_link og overliggende kamera
+% i (0, -1.25, 2.0) m. Verifiserer DH-kjeden over 500 tilfeldige
+% leddkonfigurasjoner før filen skrives.
+% Utviklet med hjelp fra Gemini (AI).
+
 %generate_robot_description  Generate palletizer_robot/urdf/robot_description.urdf.xacro
 %   from the project DH tables. Link lengths = the 12box setup with the
 %   L2/L3 SWITCH (ELE208-Semesteroppgave/Robotarm & Workspace/

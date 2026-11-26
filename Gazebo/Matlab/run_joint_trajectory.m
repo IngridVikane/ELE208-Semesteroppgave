@@ -1,3 +1,21 @@
+%% Denne filen kjører en 12-eskers palleteringsbane i Gazebo fra MATLAB over ROS 2.
+
+%    Copyright:     HVL
+%    Project:       ELE208 - Robotmanipulatorer
+%    Author:        Christoffer Træet Herland
+%    Date created:  Høst 2026
+%    Input:         ROS 2 '/joint_states' og '/arm_controller/follow_joint_trajectory' (Gazebo på VM)
+%
+%    Output:        Leddbanekommandoer for 12 esker (2 lag x 6 posisjoner) i Gazebo
+%---------------------------------------------------------------------%
+%%
+% Note: Følger strukturen fra 'lab2.m' samt bevegelsestider og baneplan fra
+% 'InverseKinematics_Palletizing12boxes_v2.m' (5.0 s per syklus,
+% 5.-gradspolynom på vertikale kartesiske bevegelser og 0.1 s vakuum-dwell).
+% Verifiserer alle 26 veipunkter mot DH-foroverkinematikk og leddgrensene
+% før kjøring.
+% Utviklet med hjelp fra Gemini (AI).
+
 %% struktur følger lab2 + InverseKinematics_Palletizing12boxes_v2.m (pallet_cycles.mat)
 %
 % VM side først:  cd ~/ros2_ws && source install/setup.bash

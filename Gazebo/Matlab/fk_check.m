@@ -1,4 +1,21 @@
 function fk_check()
+%% Denne filen verifiserer foroverkinematikken i den genererte URDF/xacro-filen mot DH-modellen.
+
+%    Copyright:     HVL
+%    Project:       ELE208 - Robotmanipulatorer
+%    Author:        Christoffer Træet Herland
+%    Date created:  Høst 2026
+%    Input:         'robot_description.urdf.xacro'
+%
+%    Output:        Verifiseringsresultat i kommandovinduet (maksimal FK-feil over 500 posisjoner)
+%---------------------------------------------------------------------%
+%%
+% Note: Kjøres etter 'generate_robot_description.m'. Leser ledd-origoene
+% direkte fra den genererte xacro-filen og sammenligner URDF-kjeden
+% (inkludert 0.10 m TCP-forskyvning langs z6) mot standard DH-produkt over
+% 500 tilfeldige leddvektorer.
+% Utviklet med hjelp fra Gemini (AI).
+
 %fk_check  Verify the SHIPPED urdf/robot_description.urdf.xacro reproduces their
 %   DH product prod_j Rz(theta_j)Tz(d)Tx(a)Rx(alpha) + eq.2 tool offset, by
 %   parsing joint origins straight out of the generated xacro (an independent

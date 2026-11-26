@@ -1,3 +1,20 @@
+%% Denne filen kjører kamerastyrt 12-eskers palletering i Gazebo med deteksjon av eskerotasjon.
+
+%    Copyright:     HVL
+%    Project:       ELE208 - Robotmanipulatorer
+%    Author:        Christoffer Træet Herland
+%    Date created:  Høst 2026
+%    Input:         ROS 2 '/camera/image_raw', '/joint_states' og '/arm_controller/follow_joint_trajectory'
+%
+%    Output:        Leddbanekommandoer med vinkeljustert plukk og live deteksjonsvindu (HUD)
+%---------------------------------------------------------------------%
+%%
+% Note: Abonnerer på overliggende RGB-kamera i Gazebo, segmenterer eskens
+% toppflate og beregner eskens rotasjon (yaw) ved hjelp av orientert
+% avgrensningsboks (OBB). Justerer TCP-rotasjonen (joint_6) ved plukk for
+% å matche esken, og retter den opp til 0 grader før plassering på pallen.
+% Utviklet med hjelp fra Gemini (AI).
+
 %% Vision-Guided 12-Box Palletizer (YOLO-OBB + TCP Yaw Alignment)
 %  Subscribes to Gazebo's published overhead camera (/camera/image_raw),
 %  runs an Oriented Bounding Box (YOLO-OBB) detector to find each randomly
