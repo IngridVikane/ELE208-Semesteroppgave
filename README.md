@@ -21,6 +21,7 @@ Filer og beskrivelse
     'Workspace.m'                              /   Arbeidsområdet: transportbånd, pall, kamera, eske i MATLAB
     'Forward_kinematics_prosjekt_for_hand.m'   /   T04 utledet for hånd, sammenlignet med toolbox 
     'InverseKinematics_Palletizing12boxes.m'   /   Baneplanlegging for 12 esker -> lagrer 'pallet_cycles.mat' som brukes videre
+    
     'Animasjon.m`                              /   Animasjon og video av banene 
     'differentialkinematic.m`                  /   Leddhastigheter, akselerasjoner og TCP-fart 
     'Palletizing_Dynamics_v3.m`                /   Dynamisk modell og rne()
