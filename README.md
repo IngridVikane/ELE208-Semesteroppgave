@@ -37,8 +37,8 @@ Filer og beskrivelse
     'PosisjonsKontroller.m'                    /   Simulert posisjons kontroller til ledd 2
 
     'ros2/...'                                 /   URDF, Gazebo-oppsett, 'run_joint_trajectory.m' 
-
-     'Singularities/...'                       /   Singularitetssjekk 12 sykluser. Tilfeller av singularitet i håndleddet og albue.
+    
+    'Singularities/...'                        /   Singularitetssjekk 12 sykluser. Tilfeller av singularitet i håndleddet og albue.
 
 NB! Kjør først baneplanleggingen. De påfølgende scriptene leser 'pallet_cycles.mat'.
 
