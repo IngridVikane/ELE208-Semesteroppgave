@@ -34,9 +34,11 @@ Filer og beskrivelse
 
     'Palletizing_Dynamics_test.m'              /   Kontroll av aktuatorvalg
 
-    'PosisjonsKontroller.m'                    /  Simulert posisjons kontroller til ledd 2
+    'PosisjonsKontroller.m'                    /   Simulert posisjons kontroller til ledd 2
 
     'ros2/...'                                 /   URDF, Gazebo-oppsett, 'run_joint_trajectory.m' 
+
+     'Singularities/...'                       /   Singularitetssjekk 12 sykluser. Tilfeller av singularitet i håndleddet og albue.
 
 NB! Kjør først baneplanleggingen. De påfølgende scriptene leser 'pallet_cycles.mat'.
 
