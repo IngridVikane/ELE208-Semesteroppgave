@@ -34,6 +34,8 @@ Filer og beskrivelse
 
     'Palletizing_Dynamics_test.m'              /   Kontroll av aktuatorvalg
 
+    'PosisjonsKontroller.m'                    /  Simulert posisjons kontroller til ledd 2
+
     'ros2/...'                                 /   URDF, Gazebo-oppsett, 'run_joint_trajectory.m' 
 
 NB! Kjør først baneplanleggingen. De påfølgende scriptene leser 'pallet_cycles.mat'.
