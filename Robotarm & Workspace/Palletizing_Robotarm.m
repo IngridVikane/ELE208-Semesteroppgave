@@ -3,7 +3,7 @@
 
 % % 
 %    Copyright:     HVL
-%    Project:	    ELE308 - Robotmanipulatorer
+%    Project:	    ELE208 - Robotmanipulatorer
 %    Author:        Ingrid Vikane
 %    Date created:  Høst 2026
 %    Input:       
@@ -17,7 +17,6 @@
 %% Robotarm for Palletering
 
 clc;
-clear;
 
 syms q1 q2 q3 q4 q5 q6 real
 syms L1 L2 L3 L4 L5 L6 real
@@ -111,7 +110,7 @@ T = Palletizing.fkine(q);
 
 % Implementer leddbegrensninger for roboter
 Palletizing.qlim = [ ...
-    deg2rad([70  230]);         % Ledd 1: revolutt
+    deg2rad([60  230]);         % Ledd 1: revolutt
     -pi/2         pi/2;         % Ledd 2: revolutt
     deg2rad([-180 180]);        % Ledd 3: revolutt
     -pi         pi;             % Ledd 4: revolutt
