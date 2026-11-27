@@ -17,15 +17,23 @@ Ingrid Soldal Vikane, Erlend Østbø
 
 ## Filer og rekkefølge
 Filer og beskrivelse
+
     'Palletizing_Robotarm.m'                   /   Robotmodell (DH-parametere, leddgrenser, TCP)
+
     'Workspace.m'                              /   Arbeidsområdet: transportbånd, pall, kamera, eske i MATLAB
+
     'Forward_kinematics_prosjekt_for_hand.m'   /   T04 utledet for hånd, sammenlignet med toolbox 
+
     'InverseKinematics_Palletizing12boxes.m'   /   Baneplanlegging for 12 esker -> lagrer 'pallet_cycles.mat' som brukes videre
-    
+
     'Animasjon.m`                              /   Animasjon og video av banene 
+
     'differentialkinematic.m`                  /   Leddhastigheter, akselerasjoner og TCP-fart 
+
     'Palletizing_Dynamics_v3.m`                /   Dynamisk modell og rne()
+
     'Palletizing_Dynamics_test.m'              /   Kontroll av aktuatorvalg
+
     'ros2/...'                                 /   URDF, Gazebo-oppsett, 'run_joint_trajectory.m' 
 
 NB! Kjør først baneplanleggingen. De påfølgende scriptene leser 'pallet_cycles.mat'.
