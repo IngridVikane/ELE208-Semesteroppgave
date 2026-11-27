@@ -9,7 +9,7 @@ Ingrid Soldal Vikane, Erlend Østbø
 
 ## Videoer
 - Palletering av 12 esker i MATLAB: https://youtu.be/s24GQhQxH6w
-- Kamerastyrt plukk av roterte esker: (https://youtu.be/qtbNQoKE5i4)
+- Kamerastyrt plukk av roterte esker: https://youtu.be/qtbNQoKE5i4
 
 ## Krav til kjøring av kode
 - MATLAB med Peter Corke's Robotics Toolbox
