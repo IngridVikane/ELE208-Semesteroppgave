@@ -5,8 +5,9 @@
 %    Author:        Erlend Østbø
 %       
 %    Date created:  Høst 2026
-% Input: Palletizing_Robotarm.m, pallet_cycles.mat
-% Output: Dynamisk modell og PID-regulering av ledd 2
+%   Input: Palletizing_Robotarm.m, pallet_cycles.mat
+%
+%   Output: Dynamisk modell og PID-regulering av ledd 2
 
 % Simulerer et posisjonssprang på 30 grader og banefølging
 % for ledd 2 ved hjelp av en PID-posisjonsregulator.
@@ -27,7 +28,8 @@ addpath(genpath(projectPath));
 
 run('Palletizing_Robotarm.m');
 
-load(fullfile(projectPath,'Trajectory Planning 12box','pallet_cycles.mat'));
+%load(fullfile(projectPath,'Trajectory Planning 12box','pallet_cycles.mat'));
+load('pallet_cycles.mat');
 
 %% 2. Dynamiske parametere
 
@@ -124,10 +126,10 @@ end
 % - Tyngdekraften antas kompensert separat.
 % - Elektrisk motordynamikk og friksjon neglisjeres.
 % - Ideell girutveksling uten tap eller slark.
-% - Griperens og eskens masse er ikke inkludert.
+% - Eskens masse er ikke inkludert.
 % - Moment- og hastighetsbegrensninger neglisjeres.
 
-joint = 2;
+joint = 2;                  % Ledd 2 velges
 q0 = cycles(1).q(1,:);
 
 
@@ -143,7 +145,7 @@ Beq = Bm;
 
 % Transferfunksjon fra motormoment til leddposisjon
 s = tf('s');
-P = 1/(G*s*(Jeq*s + Beq));
+P = 1/(G*s*(Jeq*s + Beq))
 
 %% 4. PID-regulator med derivatfilter
 
