@@ -22,7 +22,7 @@ run('Workspace.m');                 % Tegner arbeidsområdet og lager robotmodel
 load('pallet_cycles.mat');          % Gir variabelen 'cycles'
 
 boxesToShow = 1:numel(cycles);      % Hvilke esker som animeres, f.eks. 6 eller 1:12
-saveVideo   = false;                % true = lagre MP4
+saveVideo   = true;                 % true = lagre MP4
 fps         = 25;                   % Bilder per sekund
 
 fig = findobj('Type', 'figure', 'Name', '6DOF Palletizing Workspace');
